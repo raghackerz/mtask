@@ -27,7 +27,7 @@ func (ts *TimeSpan) IsValid() bool {
 	return true
 }
 
-func (ts *TimeSpan) Format() (string, error) {
+func (ts *TimeSpan) GetFormattedValue() (string, error) {
 	if !ts.IsValid() {
 		return "", fmt.Errorf("invalid TimeSpan: %v", ts)
 	}
