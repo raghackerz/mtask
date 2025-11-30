@@ -59,9 +59,13 @@ func (task *Task) PopulateDetails(match string) error {
 	task.Title = builder.String()
 	builder.Reset()
 
+	// check the level of heading
+	task.HeadingNo = 0
 	for task.Title[task.HeadingNo] == '#' {
 		task.HeadingNo++
 	}
+
+	// type of task
 	for j := task.HeadingNo + 1; task.Title[j] != ':'; j++ {
 		task.Type += string(task.Title[j])
 	}
