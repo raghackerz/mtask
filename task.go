@@ -168,3 +168,27 @@ func (task *Task) UpdateProperty(propertyType PropertyType, p any) error {
 	}
 	return nil
 }
+
+// TODO: test this function
+func (task *Task) UpdateClockData(ts TimeSpan) error {
+	lines, err := ReadLinesFromFile(task.FileDetails.FileName)
+	if err != nil {
+		return err
+	}
+
+	value, err := ts.GetFormattedValue()
+	if err != nil {
+		return err
+	}
+
+	lines, err = UpdateClockDataInSlice(lines, PropertyTypeNames[ClockData], value, task.HasProperties, task.FileDetails.LineNumber-1)
+	if err != nil {
+		return err
+	}
+
+	err = WriteLinesToFile(task.FileDetails.FileName, lines)
+	if err != nil {
+		return err
+	}
+	return nil
+}
