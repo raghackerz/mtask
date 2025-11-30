@@ -33,11 +33,16 @@ func TryParseClockData(task *Task, value string) error {
 		if err != nil {
 			return err
 		}
-		endTime, err := time.ParseInLocation("2006/01/02 15:04", times[1], time.Local)
-		if err != nil {
-			return err
+
+		if len(times) < 2 || times[1] == "" {
+			task.ClockData = append(task.ClockData, TimeSpan{StartTime: startTime, IsRunning: true})
+		} else {
+			endTime, err := time.ParseInLocation("2006/01/02 15:04", times[1], time.Local)
+			if err != nil {
+				return err
+			}
+			task.ClockData = append(task.ClockData, TimeSpan{StartTime: startTime, EndTime: endTime, IsRunning: false})
 		}
-		task.ClockData = append(task.ClockData, TimeSpan{StartTime: startTime, EndTime: endTime})
 	}
 	return nil
 }
