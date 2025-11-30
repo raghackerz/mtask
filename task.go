@@ -174,7 +174,7 @@ func (task *Task) UpdateProperty(propertyType PropertyType, p any) error {
 		if !ok {
 			return fmt.Errorf("expected time.Time, got %T", p)
 		}
-		value = formatTime(newTime)
+		value = newTime.Format(DateFormat)
 	}
 
 	lines, err = UpdatePropertyInSlice(lines, PropertyTypeNames[propertyType], value, task.HasProperties, task.FileDetails.LineNumber-1)
@@ -319,10 +319,6 @@ func wrapSliceInMTaskComment(value []string) []string {
 	wrappedValue = append(wrappedValue, value...)
 	wrappedValue = append(wrappedValue, "-->")
 	return wrappedValue
-}
-
-func formatTime(t time.Time) string {
-	return t.Format("2006/01/02")
 }
 
 func readLinesFromFile(filename string) ([]string, error) {
