@@ -127,14 +127,14 @@ func (task *Task) PopulateDetails(match string) error {
 }
 
 func (task *Task) ChangeTitle(newTitle string) error {
-	lines, err := readLinesFromFile(task.FileDetails.FileName)
+	lines, err := ReadLinesFromFile(task.FileDetails.FileName)
 	if err != nil {
 		return err
 	}
 
 	lines[task.FileDetails.LineNumber-1] = strings.Repeat("#", task.HeadingNo) + " " + task.Type + ": " + newTitle
 
-	err = writeLinesToFile(task.FileDetails.FileName, lines)
+	err = WriteLinesToFile(task.FileDetails.FileName, lines)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (task *Task) ChangeTitle(newTitle string) error {
 }
 
 func (task *Task) UpdateProperty(propertyType PropertyType, p any) error {
-	lines, err := readLinesFromFile(task.FileDetails.FileName)
+	lines, err := ReadLinesFromFile(task.FileDetails.FileName)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (task *Task) UpdateProperty(propertyType PropertyType, p any) error {
 		return err
 	}
 
-	err = writeLinesToFile(task.FileDetails.FileName, lines)
+	err = WriteLinesToFile(task.FileDetails.FileName, lines)
 	if err != nil {
 		return err
 	}

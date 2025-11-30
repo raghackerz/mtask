@@ -15,7 +15,7 @@ func (fd *FileDetails) IsValid() bool {
 	return fd.FileName != "" && fd.LineNumber > 0
 }
 
-func readLinesFromFile(filename string) ([]string, error) {
+func ReadLinesFromFile(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %v", err)
@@ -35,7 +35,7 @@ func readLinesFromFile(filename string) ([]string, error) {
 	return lines, nil
 }
 
-func writeLinesToFile(filename string, lines []string) error {
+func WriteLinesToFile(filename string, lines []string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("error creating file: %v", err)
