@@ -17,11 +17,6 @@ func (fd *FileDetails) IsValid() bool {
 	return fd.FileName != "" && fd.LineNumber > 0
 }
 
-type TimeSpan struct {
-	StartTime time.Time
-	EndTime   time.Time
-}
-
 type PropertyType int
 
 const (
