@@ -69,6 +69,7 @@ func (task *Task) PopulateDetails(match string) error {
 	for j := task.HeadingNo + 1; task.Title[j] != ':'; j++ {
 		task.Type += string(task.Title[j])
 	}
+	task.Type = strings.TrimSpace(task.Type)
 
 	if !task.HasProperties {
 		return nil
