@@ -17,20 +17,6 @@ func (fd *FileDetails) IsValid() bool {
 	return fd.FileName != "" && fd.LineNumber > 0
 }
 
-type PropertyType int
-
-const (
-	Scheduled PropertyType = iota
-	Deadline
-	ClockData
-)
-
-var PropertyTypeNames = map[PropertyType]string{
-	Scheduled: "SCHEDULED",
-	Deadline:  "DEADLINE",
-	ClockData: "CLOCK_DATA",
-}
-
 type Task struct {
 	Title         string
 	Type          string
