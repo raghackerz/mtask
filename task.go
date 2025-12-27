@@ -6,9 +6,42 @@ import (
 	"time"
 )
 
+type TaskType int
+
+const (
+	Todo TaskType = iota
+	Next
+	Done
+	NotATask
+)
+
+var TaskTypeNames = map[TaskType]string{
+	Todo:     "TODO",
+	Next:     "NEXT",
+	Done:     "DONE",
+	NotATask: "",
+}
+var TaskTypeValues = map[string]TaskType{
+	TaskTypeNames[Todo]: Todo,
+	TaskTypeNames[Next]: Next,
+	TaskTypeNames[Done]: Done,
+}
+
+func (t TaskType) String() string {
+	return TaskTypeNames[t]
+}
+
+func GetTaskTypeFromString(typeStr string) TaskType {
+	taskType, ok := TaskTypeValues[typeStr]
+	if ok {
+		return taskType
+	}
+	return NotATask
+}
+
 type Task struct {
 	Title         string
-	Type          string
+	Type          TaskType
 	HeadingNo     int
 	Scheduled     time.Time
 	Deadline      time.Time
@@ -36,6 +69,7 @@ func (task *Task) PopulateDetails(match string) error {
 	if err != nil {
 		return err
 	}*/
+	match = strings.ReplaceAll(match, "\r\n", "\n")
 	task.HasProperties = strings.Count(match, "\n") >= 2
 	keyValue := make(map[string]string)
 	var builder strings.Builder
@@ -55,10 +89,16 @@ func (task *Task) PopulateDetails(match string) error {
 	}
 
 	// type of task
-	for j := task.HeadingNo + 1; task.Title[j] != ':'; j++ {
-		task.Type += string(task.Title[j])
+	if strings.Contains(task.Title, ":") {
+		typeStr := ""
+		for j := task.HeadingNo + 1; task.Title[j] != ':'; j++ {
+			typeStr += string(task.Title[j])
+		}
+		typeStr = strings.TrimSpace(typeStr)
+		task.Type = GetTaskTypeFromString(typeStr)
+	} else {
+		task.Type = NotATask
 	}
-	task.Type = strings.TrimSpace(task.Type)
 
 	if !task.HasProperties {
 		return nil
@@ -132,7 +172,11 @@ func (task *Task) ChangeTitle(newTitle string) error {
 		return err
 	}
 
-	lines[task.FileDetails.LineNumber-1] = strings.Repeat("#", task.HeadingNo) + " " + task.Type + ": " + newTitle
+	if task.Type != NotATask {
+		lines[task.FileDetails.LineNumber-1] = strings.Repeat("#", task.HeadingNo) + " " + task.Type.String() + ": " + newTitle
+	} else {
+		lines[task.FileDetails.LineNumber-1] = strings.Repeat("#", task.HeadingNo) + " " + newTitle
+	}
 
 	err = WriteLinesToFile(task.FileDetails.FileName, lines)
 	if err != nil {

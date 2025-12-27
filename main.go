@@ -5,25 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os/exec"
 )
 
-type RipgrepText struct {
-	Text string `json:"text"`
-}
-
-type RipgrepResult struct {
-	Type string `json:"type"`
-	Data struct {
-		Path       RipgrepText `json:"path"`
-		Lines      RipgrepText `json:"lines"`
-		LineNumber int         `json:"line_number"`
-	} `json:"data"`
-}
-
 func main() {
-	// rg --json -g '*.md' -U -e '^#{1,6}\s+TODO:.+\n(?:\s*<!-- MTASK[\S\s]*?-->)?'
-	out, err := exec.Command("rg", "--json", "-g", "*.md", "-U", "-e", "^#{1,6}\\s+TODO:.+\\n(?:\\s*<!-- MTASK[\\S\\s]*?-->)?").Output()
+	out, err := GetAllMatchesInRootDir()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,12 +28,22 @@ func main() {
 			fileName = r.Data.Path.Text
 		}
 		if r.Type == "match" {
-			task := Task{}
-			task.FileDetails.FileName = fileName
-			task.FileDetails.LineNumber = r.Data.LineNumber
-			task.PopulateDetails(r.Data.Lines.Text)
-			tasks = append(tasks, task)
-			fmt.Println(task)
+			currentLineNumber := r.Data.LineNumber
+			temp := 0
+			for _, match := range r.Data.Submatches {
+				for temp < match.Start {
+					if r.Data.Lines.Text[temp] == '\n' {
+						currentLineNumber++
+					}
+					temp++
+				}
+				task := Task{}
+				task.FileDetails.FileName = fileName
+				task.FileDetails.LineNumber = currentLineNumber
+				task.PopulateDetails(match.Match.Text)
+				tasks = append(tasks, task)
+				fmt.Println(task)
+			}
 		}
 	}
 }
