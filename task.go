@@ -40,15 +40,15 @@ func GetTaskTypeFromString(typeStr string) TaskType {
 }
 
 type Task struct {
-	Title         string
-	Type          TaskType
-	HeadingNo     int
-	Scheduled     time.Time
-	Deadline      time.Time
-	ClockData     []TimeSpan
-	FileDetails   FileDetails
-	SubTasks      []Task
-	HasProperties bool
+	Title               string
+	Type                TaskType
+	HeadingNo           int
+	Scheduled           time.Time
+	Deadline            time.Time
+	ClockData           []TimeSpan
+	FileDetails         FileDetails
+	SubTasks            []Task
+	HasPropertiesInFile bool
 }
 
 func (task *Task) String() string {
@@ -63,7 +63,7 @@ func (task *Task) String() string {
 	}
 	builder.WriteString(task.Title)
 	builder.WriteByte('\n')
-	if !task.HasProperties {
+	if !task.HasPropertiesInFile {
 		return builder.String()
 	}
 	builder.WriteString("<!-- MTASK\n")
@@ -127,7 +127,7 @@ func (task *Task) PopulateDetails(match string) error {
 		return err
 	}*/
 	match = strings.ReplaceAll(match, "\r\n", "\n")
-	task.HasProperties = strings.Count(match, "\n") >= 2
+	task.HasPropertiesInFile = strings.Count(match, "\n") >= 2
 	keyValue := make(map[string]string)
 	var builder strings.Builder
 	i := 0
@@ -139,7 +139,7 @@ func (task *Task) PopulateDetails(match string) error {
 	task.HeadingNo, task.Type, task.Title = ParseTitleLine(builder.String())
 	builder.Reset()
 
-	if !task.HasProperties {
+	if !task.HasPropertiesInFile {
 		return nil
 	}
 	// ignore characters until we find the 'K' character
@@ -205,71 +205,34 @@ func (task *Task) PopulateDetails(match string) error {
 	return nil
 }
 
-func (task *Task) ChangeTitle(newTitle string) error {
+func (task *Task) WriteToFile() error {
 	lines, err := ReadLinesFromFile(task.FileDetails.FileName)
 	if err != nil {
 		return err
 	}
-
-	if task.Type != NotATask {
-		lines[task.FileDetails.LineNumber-1] = strings.Repeat("#", task.HeadingNo) + " " + task.Type.String() + ": " + newTitle
-	} else {
-		lines[task.FileDetails.LineNumber-1] = strings.Repeat("#", task.HeadingNo) + " " + newTitle
-	}
-
-	err = WriteLinesToFile(task.FileDetails.FileName, lines)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (task *Task) UpdateProperty(propertyType PropertyType, p any) error {
-	lines, err := ReadLinesFromFile(task.FileDetails.FileName)
-	if err != nil {
-		return err
-	}
-
-	var value string
-	if propertyType == Scheduled || propertyType == Deadline {
-		newTime, ok := p.(time.Time)
-		if !ok {
-			return fmt.Errorf("expected time.Time, got %T", p)
+	startLine := task.FileDetails.LineNumber - 1
+	endLine := startLine
+	// TODO: Think how we make sure that this always updated with file
+	if task.HasPropertiesInFile {
+		startFound := true
+		for endLine < len(lines) {
+			if strings.Contains(lines[endLine], "<!-- MTASK") {
+				startFound = true
+			}
+			if startFound && strings.Contains(lines[endLine], "-->") {
+				break
+			}
+			endLine++
 		}
-		value = newTime.Format(DateFormat)
 	}
-
-	lines, err = UpdatePropertyInSlice(lines, PropertyTypeNames[propertyType], value, task.HasProperties, task.FileDetails.LineNumber-1)
-	if err != nil {
-		return err
-	}
-
-	err = WriteLinesToFile(task.FileDetails.FileName, lines)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// TODO: test this function
-func (task *Task) UpdateClockData(ts TimeSpan) error {
-	lines, err := ReadLinesFromFile(task.FileDetails.FileName)
-	if err != nil {
-		return err
-	}
-
-	value, err := ts.GetFormattedValue()
-	if err != nil {
-		return err
-	}
-
-	lines, err = UpdateClockDataInSlice(lines, PropertyTypeNames[ClockData], value, task.HasProperties, task.FileDetails.LineNumber-1)
-	if err != nil {
-		return err
-	}
-
-	err = WriteLinesToFile(task.FileDetails.FileName, lines)
+	taskString := task.String()
+	taskLines := strings.Split(taskString, "\n")
+	taskLines = taskLines[:len(taskLines)-1] // remove the last empty line
+	resultLines := make([]string, 0)
+	resultLines = append(resultLines, lines[:startLine]...)
+	resultLines = append(resultLines, taskLines...)
+	resultLines = append(resultLines, lines[endLine+1:]...)
+	err = WriteLinesToFile(task.FileDetails.FileName+"temp.md", resultLines)
 	if err != nil {
 		return err
 	}
