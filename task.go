@@ -63,7 +63,7 @@ func (task *Task) String() string {
 	}
 	builder.WriteString(task.Title)
 	builder.WriteByte('\n')
-	if !task.HasPropertiesInFile {
+	if !task.HasProperties() {
 		return builder.String()
 	}
 	builder.WriteString("<!-- MTASK\n")
@@ -243,4 +243,8 @@ func (task *Task) WriteToFile() error {
 		return err
 	}
 	return nil
+}
+
+func (task *Task) HasProperties() bool {
+	return !task.Scheduled.IsZero() || !task.Deadline.IsZero() || len(task.ClockData) > 0
 }
