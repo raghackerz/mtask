@@ -51,6 +51,40 @@ type Task struct {
 	HasProperties bool
 }
 
+func (task *Task) String() string {
+	var builder strings.Builder
+	for i := 0; i < task.HeadingNo; i++ {
+		builder.WriteByte('#')
+	}
+	builder.WriteByte(' ')
+	if task.Type != NotATask {
+		builder.WriteString(task.Type.String())
+		builder.WriteString(": ")
+	}
+	builder.WriteString(task.Title)
+	builder.WriteByte('\n')
+	if !task.HasProperties {
+		return builder.String()
+	}
+	builder.WriteString("<!-- MTASK\n")
+	if !task.Scheduled.IsZero() {
+		builder.WriteString(fmt.Sprintf("%s: %s\n", PropertyTypeNames[Scheduled], task.Scheduled.Format(DateFormat)))
+	}
+	if !task.Deadline.IsZero() {
+		builder.WriteString(fmt.Sprintf("%s: %s\n", PropertyTypeNames[Deadline], task.Scheduled.Format(DateFormat)))
+	}
+	if len(task.ClockData) > 0 {
+		builder.WriteString(fmt.Sprintf(":%s:\n", PropertyTypeNames[ClockData]))
+		for _, ts := range task.ClockData {
+			value, _ := ts.GetFormattedValue()
+			builder.WriteString(fmt.Sprintf("%s\n", value))
+		}
+		builder.WriteString(":END:\n")
+	}
+	builder.WriteString("-->\n")
+	return builder.String()
+}
+
 func (task *Task) ParseProperties(propertyMap map[string]string) error {
 	for _, parser := range PropertyParsers {
 		value, ok := propertyMap[parser.Property]
