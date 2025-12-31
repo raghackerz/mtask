@@ -5,8 +5,12 @@ import (
 	"time"
 )
 
+func ParseScheduleFromString(value string) (time.Time, error) {
+	return time.ParseInLocation(DateFormat, value, time.Local)
+}
+
 func TryParseSchedule(task *Task, value string) error {
-	val, err := time.ParseInLocation("2006/01/02", value, time.Local)
+	val, err := ParseScheduleFromString(value)
 	if err != nil {
 		return err
 	}
@@ -14,8 +18,11 @@ func TryParseSchedule(task *Task, value string) error {
 	return nil
 }
 
+func ParseDeadlineFromString(value string) (time.Time, error) {
+	return time.ParseInLocation(DateFormat, value, time.Local)
+}
 func TryParseDeadline(task *Task, value string) error {
-	val, err := time.ParseInLocation("2006/01/02", value, time.Local)
+	val, err := ParseDeadlineFromString(value)
 	if err != nil {
 		return err
 	}
@@ -23,7 +30,8 @@ func TryParseDeadline(task *Task, value string) error {
 	return nil
 }
 
-func TryParseClockData(task *Task, value string) error {
+func ParseClockDataFromString(value string) ([]TimeSpan, error) {
+	res := make([]TimeSpan, 0)
 	for timeSpan := range strings.SplitSeq(value, "\n") {
 		times := strings.Split(timeSpan, "-")
 		for i := range times {
@@ -31,19 +39,28 @@ func TryParseClockData(task *Task, value string) error {
 		}
 		startTime, err := time.ParseInLocation("2006/01/02 15:04", times[0], time.Local)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if len(times) < 2 || times[1] == "" {
-			task.ClockData = append(task.ClockData, TimeSpan{StartTime: startTime, IsRunning: true})
+			res = append(res, TimeSpan{StartTime: startTime, IsRunning: true})
 		} else {
 			endTime, err := time.ParseInLocation("2006/01/02 15:04", times[1], time.Local)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			task.ClockData = append(task.ClockData, TimeSpan{StartTime: startTime, EndTime: endTime, IsRunning: false})
+			res = append(res, TimeSpan{StartTime: startTime, EndTime: endTime, IsRunning: false})
 		}
 	}
+	return res, nil
+}
+
+func TryParseClockData(task *Task, value string) error {
+	parsed, err := ParseClockDataFromString(value)
+	if err != nil {
+		return err
+	}
+	task.ClockData = parsed
 	return nil
 }
 
