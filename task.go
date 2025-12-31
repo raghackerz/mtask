@@ -89,7 +89,10 @@ func (task *Task) ParseProperties(propertyMap map[string]string) error {
 	for _, parser := range PropertyParsers {
 		value, ok := propertyMap[parser.Property]
 		if ok {
-			parser.Parse(task, value)
+			err := parser.Parse(task, value)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -201,7 +204,10 @@ func (task *Task) PopulateDetails(match string) error {
 		keyValue[key] = builder.String()
 		builder.Reset()
 	}
-	task.ParseProperties(keyValue)
+	err := task.ParseProperties(keyValue)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
