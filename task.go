@@ -61,6 +61,29 @@ func (task *Task) ParseProperties(propertyMap map[string]string) error {
 	return nil
 }
 
+func ParseTitleLine(str string) (int, TaskType, string) {
+	headingNo := 0
+	taskType := NotATask
+	var titleStr string
+	for str[headingNo] == '#' {
+		headingNo++
+	}
+	indexTitleStart := headingNo + 1
+	if strings.Contains(str, ":") {
+		typeStr := ""
+		for j := headingNo + 1; str[j] != ':'; j++ {
+			typeStr += string(str[j])
+		}
+		indexTitleStart += len(typeStr) + 1
+		typeStr = strings.TrimSpace(typeStr)
+		taskType = GetTaskTypeFromString(typeStr)
+	} else {
+		taskType = NotATask
+	}
+	titleStr = strings.TrimSpace(str[indexTitleStart:])
+	return headingNo, taskType, titleStr
+}
+
 func (task *Task) PopulateDetails(match string) error {
 	/*if !task.FileDetails.IsValid() {
 		return fmt.Errorf("invalid file details: %v", task.FileDetails)
@@ -79,26 +102,8 @@ func (task *Task) PopulateDetails(match string) error {
 		builder.WriteByte(match[i])
 		i++
 	}
-	task.Title = builder.String()
+	task.HeadingNo, task.Type, task.Title = ParseTitleLine(builder.String())
 	builder.Reset()
-
-	// check the level of heading
-	task.HeadingNo = 0
-	for task.Title[task.HeadingNo] == '#' {
-		task.HeadingNo++
-	}
-
-	// type of task
-	if strings.Contains(task.Title, ":") {
-		typeStr := ""
-		for j := task.HeadingNo + 1; task.Title[j] != ':'; j++ {
-			typeStr += string(task.Title[j])
-		}
-		typeStr = strings.TrimSpace(typeStr)
-		task.Type = GetTaskTypeFromString(typeStr)
-	} else {
-		task.Type = NotATask
-	}
 
 	if !task.HasProperties {
 		return nil
